@@ -334,6 +334,18 @@ namespace Umbraco.Web.Editors
                 throw new HttpResponseException(Request.CreateValidationErrorResponse(forDisplay));
             }
 
+            var existingMember = Services.MemberService.GetByUsername(contentItem.Username);
+            var id = contentItem.Id as int?;
+            if (existingMember != null && id != null && existingMember.Id != id)
+            {
+                var forDisplay = AutoMapperExtensions.MapWithUmbracoContext<IMember, MemberDisplay>(contentItem.PersistedContent, UmbracoContext);
+                ModelState.AddPropertyError(
+                    new ValidationResult("Username is already in use", new[] { "value" }),
+                    string.Format("{0}login", Constants.PropertyEditors.InternalGenericPropertiesPrefix));
+                forDisplay.Errors = ModelState.ToErrorDictionary();
+                throw new HttpResponseException(Request.CreateValidationErrorResponse(forDisplay));
+            }
+
             //save the IMember - 
             //TODO: When we support the CustomProviderWithUmbracoLink scenario, we'll need to save the custom properties for that here too
             if (MembershipScenario == MembershipScenario.NativeUmbraco)
